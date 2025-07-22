@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Life Companion Compatibility Survey</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2em; background: #f4f4f4; }
+    .container { background: white; padding: 2em; border-radius: 10px; max-width: 700px; margin: auto; }
+    h1 { text-align: center; }
+    label { display: block; margin-top: 1em; font-weight: bold; }
+    .slider { width: 100%; }
+    .weight-slider { accent-color: #4CAF50; }
+    .score-slider { accent-color: #2196F3; }
+    .section { margin-bottom: 2em; }
+    #result { font-size: 1.5em; text-align: center; margin-top: 2em; }
+    .description { font-style: italic; font-size: 0.9em; margin-bottom: 0.5em; }
+    .slider-pair { display: flex; gap: 1em; align-items: center; margin-top: 0.5em; }
+    .slider-group { flex: 1; text-align: center; }
+    .slider-group label { font-weight: normal; margin-bottom: 0.2em; display: block; }
+    .actions, .secondary-actions { text-align: center; margin-top: 2em; }
+    .actions button { margin: 0.5em; padding: 0.7em 1.5em; font-size: 1.2em; background-color: #007BFF; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    .secondary-actions button { margin: 0.5em; padding: 0.5em 1em; font-size: 1em; cursor: pointer; }
+    select[multiple] { width: 100%; padding: 0.5em; height: 100px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌟 Life Companion Survey 🌟</h1>
+    <form id="companionForm">
+      <label for="partnerName">Name of Potential Partner:</label>
+      <input type="text" id="partnerName" name="partnerName" placeholder="Enter name here" style="width: 100%; padding: 0.5em; margin-bottom: 1em;">
+
+      <div id="categories"></div>
+
+      <label for="dealbreakers">Select any dealbreakers:</label>
+      <select id="dealbreakers" multiple>
+        <option value="smoking">🚬 Smoking</option>
+        <option value="kids">👶 Doesn't want kids</option>
+        <option value="politics">🗳️ Strong political differences</option>
+        <option value="religion">🙏 Religious incompatibility</option>
+        <option value="goals">🎯 Different life goals</option>
+        <option value="finance">💸 Financial irresponsibility</option>
+      </select>
+
+      <div class="actions">
+        <button type="button" onclick="calculateScore()">✨ Calculate Compatibility Score</button>
+      </div>
+
+      <div class="secondary-actions">
+        <button type="button" onclick="window.print()">🖨️ Print</button>
+        <button type="button" onclick="saveSurvey()">💾 Save</button>
+        <button type="button" onclick="shareSurvey()">🔗 Share</button>
+      </div>
+
+      <div id="result"></div>
+    </form>
+  </div>
+
+  <script>
+    const categories = [
+      { name: "Looks", emoji: "👀", description: "Physical appearance and personal style." },
+      { name: "Personality", emoji: "😄", description: "Kindness, humor, confidence, and social energy." },
+      { name: "Intelligence", emoji: "🧠", description: "Problem-solving skills, curiosity, and thoughtfulness." },
+      { name: "Spirituality", emoji: "🕊️", description: "Shared beliefs, values, and sense of purpose." },
+      { name: "Shared Interests", emoji: "🎨", description: "Hobbies, passions, and ways you spend time together." },
+      { name: "Values", emoji: "💖", description: "Core life values like honesty, respect, family, and purpose." },
+      { name: "Intangibles", emoji: "✨", description: "Things like political views, lifestyle goals, and ambition or drive." }
+    ];
+
+    const categoriesDiv = document.getElementById("categories");
+
+    categories.forEach(cat => {
+      const section = document.createElement("div");
+      section.classList.add("section");
+      section.innerHTML = `
+        <div class="description"><strong>${cat.emoji} ${cat.name}</strong>: ${cat.description}</div>
+        <div class="slider-pair">
+          <div class="slider-group">
+            <label>Importance (0–10)</label>
+            <input type="range" min="0" max="10" value="5" class="slider weight-slider" name="weight_${cat.name}" oninput="updateDisplay(this)">
+            <span id="weightDisplay_${cat.name}">5</span>
+          </div>
+          <div class="slider-group">
+            <label>Score (1–10)</label>
+            <input type="range" min="1" max="10" value="5" class="slider score-slider" name="score_${cat.name}" oninput="updateDisplay(this)">
+            <span id="scoreDisplay_${cat.name}">5</span>
+          </div>
+        </div>
+      `;
+      categoriesDiv.appendChild(section);
+    });
+
+    function updateDisplay(slider) {
+      const [type, cat] = slider.name.split("_");
+      document.getElementById(`${type}Display_${cat}`).textContent = slider.value;
+    }
+
+    function calculateScore() {
+      const selectedDealbreakers = Array.from(document.getElementById("dealbreakers").selectedOptions).map(opt => opt.value);
+      if (selectedDealbreakers.length > 0) {
+        document.getElementById("result").innerHTML = `
+          Compatibility Score: <strong>0</strong> / 100<br>
+          <span>🚫 One or more dealbreakers detected. Probably not a match.</span>
+        `;
+        return;
+      }
+
+      let totalWeightedScore = 0;
+      let totalWeight = 0;
+
+      categories.forEach(cat => {
+        const weight = parseFloat(document.querySelector(`[name='weight_${cat.name}']`).value);
+        const score = parseFloat(document.querySelector(`[name='score_${cat.name}']`).value);
+        totalWeightedScore += weight * score;
+        totalWeight += weight;
+      });
+
+      const resultScore = totalWeight === 0 ? 0 : (totalWeightedScore / totalWeight) * 10;
+      const roundedScore = Math.round(resultScore);
+
+      let commentary = "";
+      if (roundedScore >= 90) commentary = "A+ — They're an amazing match! 💍";
+      else if (roundedScore >= 80) commentary = "B+ — Pretty solid potential. 😊";
+      else if (roundedScore >= 70) commentary = "C+ — Could work, but be cautious. 🤔";
+      else if (roundedScore >= 60) commentary = "D — Some areas may need attention. 🛠️";
+      else commentary = "F — You might want to keep looking. 🚫";
+
+      document.getElementById("result").innerHTML = `
+        Compatibility Score: <strong>${roundedScore}</strong> / 100<br>
+        <span>${commentary}</span>
+      `;
+    }
+
+    function saveSurvey() {
+      const name = document.getElementById("partnerName").value || "Unnamed";
+      const result = document.getElementById("result").innerText || "No score yet.";
+      alert(`Saved: ${name}\n${result}`);
+    }
+
+    function shareSurvey() {
+      alert("Share feature coming soon! You’ll be able to generate a link or export your results.");
+    }
+  </script>
+</body>
+</html>
